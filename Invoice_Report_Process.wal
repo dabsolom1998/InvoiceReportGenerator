@@ -1,0 +1,44 @@
+
+	MÐÝÒôÊ¬N•=lpFýg_¾defVar --name Files --type List --innertype String
+defVar --name PDFFile --type String
+defVar --name StatementPDF --type Pdf
+defVar --name InvNumber --type String
+defVar --name InvDate --type String
+defVar --name InvAmount --type String
+defVar --name CustomerName --type String
+defVar --name InvLineItems --type String
+defVar --name InvoiceText --type String
+defVar --name CurrentDate --type DateTime
+defVar --name InvoiveFileRenamed --type String
+defVar --name InvDetailsDataTable --type DataTable
+defVar --name InvLineItemsDataTable --type DataTable
+defVar --name ExcelInvoiceReportFile --type Excel
+getCurrentDateAndTime --localorutc "LocalTime" --getcurrentdateonly  CurrentDate=value
+dateTimeToDate --dateTime "${CurrentDate}" CurrentDate=value
+logMessage --message "${CurrentDate}" --type "Info"
+getFiles --path "C:\\Users\\Danielle\\Desktop\\IBM RPA Invoice Report Process\\Data\\Invoices" Files=value
+fileCopy --from "C:\\Users\\Danielle\\Desktop\\IBM RPA Invoice Report Process\\Data\\InvoiceReport.xlsx" --to "C:\\Users\\Danielle\\Desktop\\IBM RPA Invoice Report Process\\Data\\TempReport"
+excelOpen --file "C:\\Users\\Danielle\\Desktop\\IBM RPA Invoice Report Process\\Data\\InvoiceReport.xlsx" --savechanges  ExcelInvoiceReportFile=value
+excelGetTable --file ${ExcelInvoiceReportFile} --sheet InvoiceDetails --entiretable  --hasheaders  InvDetailsDataTable=value
+excelGetTable --file ${ExcelInvoiceReportFile} --sheet InvoiceLineItems --entiretable  --hasheaders  InvLineItemsDataTable=value
+goSub --label Extract_InvoiceDetails
+excelSetTable --dataTable ${InvDetailsDataTable} --headers  --file ${ExcelInvoiceReportFile} --getfirstsheet  --row 1 --column 1
+excelSetTable --dataTable ${InvLineItemsDataTable} --headers  --file ${ExcelInvoiceReportFile} --sheet InvoiceLineItems --row 1 --column 1
+fileRename --file "C:\\Users\\Danielle\\Desktop\\IBM RPA Invoice Report Process\\Data\\TempReport\\InvoiceReport.xlsx" --newname "InvoiceReport_${CurrentDate}" InvoiveFileRenamed=value
+fileMove --from "C:\\Users\\Danielle\\Desktop\\IBM RPA Invoice Report Process\\Data\\TempReport\\InvoiceReport_${CurrentDate}.xlsx" --to "C:\\Users\\Danielle\\Desktop\\IBM RPA Invoice Report Process\\Data"
+beginSub --name Extract_InvoiceDetails
+foreach --collection "${Files}" --variable "${PDFFile}"
+	pdfOpen --file "${PDFFile}" StatementPDF=value
+	pdfText --file ${StatementPDF} InvoiceText=value
+	pdfRegionText --region "798,90,76,22" --language en-US --page 1 --dpix 110 --dpiy 110 --file ${StatementPDF} InvNumber=value
+	pdfRegionText --region "785,170,82,19" --language en-US --page 1 --dpix 110 --dpiy 110 --file ${StatementPDF} InvDate=value
+	pdfRegionText --region "774,237,110,28" --language en-US --page 1 --dpix 110 --dpiy 110 --file ${StatementPDF} InvAmount=value
+	pdfRegionText --region "73,305,78,18" --language en-US --page 1 --dpix 110 --dpiy 110 --file ${StatementPDF} CustomerName=value
+	addRow --valuesmapping "Invoice Number=${InvNumber},Customer Name=${CustomerName},Invoice Amount=${InvAmount},Invoice Date=${InvDate}" --dataTable ${InvDetailsDataTable}
+	getRegex --text "${InvoiceText}" --regexPattern "(?<=Amount)([\\S\\s]*?)Total.*" --regexOptions "IgnoreCase, Multiline" InvLineItems=value
+	addRow --valuesmapping "Customer Name=${CustomerName},Line Items=${InvLineItems}" --dataTable ${InvLineItemsDataTable}
+	//mapTableRow --dataTable ${InvReportTable} --row ${InvReportRows} --mappings "name=Invoice Number=${InvNumber},name=Customer Name=${CustomerName},name=Invoice Amount=${InvAmount},name=Invoice Date=${InvDate}"
+endFor
+endSub
+beginSub --name Extract_InvoiceLineItems
+endSub"	i¬Òn“3NŽ<WºSP*	20.12.0.0
